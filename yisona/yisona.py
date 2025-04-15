@@ -4,14 +4,15 @@ import requests
 import os
 
 
-class YisonaLocal:
+class Yisona:
     """
     A class for local JSON file operations with nested key support and SQLite integration.
     """
+
     def __init__(self, json_file_path):
         """
         Initialize a YisonaLocal object with a JSON file path.
-        
+
         Args:
             json_file_path (str): Path to the JSON file to be loaded or created
         """
@@ -36,10 +37,10 @@ class YisonaLocal:
     def get_json(self, key):
         """
         Get a value from the JSON data using a dot-notated key path.
-        
+
         Args:
             key (str): Dot-notated key path to retrieve (e.g., "users.admin.name")
-            
+
         Returns:
             The value at the key path or None if not found
         """
@@ -55,17 +56,17 @@ class YisonaLocal:
     def write_json(self, key, value):
         """
         Write a value to the JSON file at a specific key path.
-        
+
         Args:
             key (str): Dot-notated key path to update (e.g., "users.admin.name")
             value: Value to set at the key path
-            
+
         Returns:
             bool: True if successful, False otherwise
         """
         keys = str(key).split('.')
         current = self.data
-        
+
         # Navigate through nested structure
         for k in keys[:-1]:
             if k not in current:
@@ -74,10 +75,10 @@ class YisonaLocal:
                 # If the path exists but isn't a dict, convert it to one
                 current[k] = {}
             current = current[k]
-        
+
         # Set the value at the final key
         current[keys[-1]] = value
-        
+
         try:
             with open(self.json_file_path, 'w', encoding='utf-8') as file:
                 json.dump(self.data, file, ensure_ascii=False, indent=4)
@@ -89,10 +90,10 @@ class YisonaLocal:
     def get_json_as_number(self, key):
         """
         Get a value from the JSON data and convert it to a number.
-        
+
         Args:
             key (str): Dot-notated key path to retrieve
-            
+
         Returns:
             float: The numeric value or None if not convertible
         """
@@ -107,11 +108,11 @@ class YisonaLocal:
     def create_json(self, key, value):
         """
         Create a new entry in the JSON data.
-        
+
         Args:
             key (str): Key for the new entry
             value: Value to associate with the key
-            
+
         Returns:
             bool: True if successful, False otherwise
         """
@@ -119,12 +120,12 @@ class YisonaLocal:
 
     def get_sqlite(self, db_path, query):
         """
-        Execute a SQLite query and return the results.
-        
+        Execute a SQLite query and return the results. (old)
+
         Args:
             db_path (str): Path to the SQLite database file
             query (str): SQL query to execute
-            
+
         Returns:
             list: List of query result rows
         """
@@ -142,30 +143,30 @@ class YisonaLocal:
     def cc(self, key, default_value):
         """
         Check if a key exists, create it with a default value if it doesn't.
-        
+
         Args:
             key (str): Dot-notated key path to check
             default_value: Value to set if key doesn't exist
-            
+
         Returns:
             bool: True if key existed, False if it was created
         """
         keys = str(key).split('.')
         current = self.data
-        
+
         # Navigate through nested structure
         for k in keys[:-1]:
             if k not in current or not isinstance(current[k], dict):
                 current[k] = {}
             current = current[k]
-                
+
         # Check if final key exists
         if keys[-1] in current:
             return True
-            
+
         # Create with default value
         current[keys[-1]] = default_value
-        
+
         try:
             with open(self.json_file_path, 'w', encoding='utf-8') as file:
                 json.dump(self.data, file, ensure_ascii=False, indent=4)
@@ -177,16 +178,16 @@ class YisonaLocal:
     def delete_json(self, key):
         """
         Delete a key-value pair from the JSON data.
-        
+
         Args:
             key (str): Dot-notated key path to delete
-            
+
         Returns:
             bool: True if deletion was successful, False otherwise
         """
         keys = str(key).split('.')
         current = self.data
-        
+
         # Navigate to parent of target key
         for k in keys[:-1]:
             if isinstance(current, dict) and k in current:
@@ -194,11 +195,11 @@ class YisonaLocal:
             else:
                 # Path doesn't exist
                 return False
-        
+
         # Delete the key if it exists
         if isinstance(current, dict) and keys[-1] in current:
             del current[keys[-1]]
-            
+
             try:
                 with open(self.json_file_path, 'w', encoding='utf-8') as file:
                     json.dump(self.data, file, ensure_ascii=False, indent=4)
@@ -208,15 +209,17 @@ class YisonaLocal:
                 return False
         return False
 
+
 class YisonaConnect:
     """
     A client for interacting with the Yisona API for remote JSON operations.
     Uses only a token to authenticate and identify the database.
     """
+
     def __init__(self, token):
         """
         Initialize the YisonaConnect client.
-        
+
         Args:
             base_url (str): The base URL of the API (e.g., 'http://localhost:5000')
             token (str): Authentication token for the API that identifies the database
@@ -229,24 +232,24 @@ class YisonaConnect:
         self.api_url = f"{self.base_url}/api"
         self.cached_data = None
         self.last_update = 0
-    
+
     def get_json(self, key=None):
         """
         Get data from the remote database. If key is provided, returns only that key's value.
-        
+
         Args:
             key (str, optional): The specific dot-notated key path to retrieve
-            
+
         Returns:
             The value at the specified key path or the entire data if no key is provided
         """
         params = {'token': self.token}
         if key:
             params['key'] = key
-        
+
         try:
             response = self.requests.get(self.api_url, params=params)
-            
+
             if response.status_code == 200:
                 data = response.json()
                 if key:
@@ -262,28 +265,28 @@ class YisonaConnect:
         except Exception as e:
             print(f"Connection error: {e}")
             return None
-    
+
     def create_json(self, key, value):
         """
         Create a new entry in the remote database.
-        
+
         Args:
             key (str): Dot-notated key path for the new entry
             value: Value to associate with the key
-            
+
         Returns:
             bool: True if successful, False otherwise
         """
         return self.write_json(key, value)
-    
+
     def write_json(self, key, value):
         """
         Update an existing entry in the remote database.
-        
+
         Args:
             key (str): Dot-notated key path to update
             value: Value to set at the key path
-            
+
         Returns:
             bool: True if successful, False otherwise
         """
@@ -291,7 +294,7 @@ class YisonaConnect:
             'Content-Type': 'application/json',
             'X-API-Token': self.token
         }
-        
+
         # For nested keys, we need to create the proper structure
         data_dict = {}
         if '.' in key:
@@ -303,14 +306,14 @@ class YisonaConnect:
             current[parts[-1]] = value
         else:
             data_dict[key] = value
-        
+
         try:
             response = self.requests.put(
                 self.api_url,
                 headers=headers,
                 json=data_dict
             )
-            
+
             if response.status_code == 200:
                 return True
             else:
@@ -320,14 +323,14 @@ class YisonaConnect:
         except Exception as e:
             print(f"Connection error: {e}")
             return False
-    
+
     def get_json_as_number(self, key):
         """
         Get a value from the remote database and convert it to a number.
-        
+
         Args:
             key (str): Dot-notated key path to retrieve
-            
+
         Returns:
             float: The numeric value or None if not convertible
         """
@@ -338,14 +341,14 @@ class YisonaConnect:
             return float(value)
         except (ValueError, TypeError):
             return None
-    
+
     def delete_json(self, key):
         """
         Delete a specific key from the remote database.
-        
+
         Args:
             key (str): The dot-notated key path to delete
-            
+
         Returns:
             bool: True if successful, False otherwise
         """
@@ -353,10 +356,10 @@ class YisonaConnect:
             'token': self.token,
             'key': key
         }
-        
+
         try:
             response = self.requests.delete(self.api_url, params=params)
-            
+
             if response.status_code == 200:
                 return True
             else:
@@ -366,21 +369,21 @@ class YisonaConnect:
         except Exception as e:
             print(f"Connection error: {e}")
             return False
-    
+
     def cc(self, key, default_value):
         """
         Check if a key exists in the remote database, create it with a default value if it doesn't.
-        
+
         Args:
             key (str): Dot-notated key path to check
             default_value: Value to set if key doesn't exist
-            
+
         Returns:
             bool: True if key existed, False if it was created
         """
         # Try to get the value first
         value = self.get_json(key)
-        
+
         # If value doesn't exist, create it
         if value is None:
             self.write_json(key, default_value)

@@ -1,0 +1,29 @@
+[project]
+name = "yisona"
+description = "An Easy Json Loader"
+requires-python = ">=3.6"
+license = {text = "MIT"}
+readme = "README.md"
+keywords = ["json", "loader", "easy"]
+authors = [
+    { name = "younglinslayer19" }
+]
+classifiers = [
+    "Development Status :: 5 - Production",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dynamic = ["dependencies", "version"]
+
+
+[project.urls]
+GitHub = "https://github.com/younglinslayer19/yisona"
+
+[build-system]
+requires = ["requests"]

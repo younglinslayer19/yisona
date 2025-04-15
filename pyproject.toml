@@ -26,4 +26,4 @@ dynamic = ["dependencies", "version"]
 GitHub = "https://github.com/younglinslayer19/yisona"
 
 [build-system]
-requires = ["requests"]
+requires = ["requests", "setuptools>=61.0"]
